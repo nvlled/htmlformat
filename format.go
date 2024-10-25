@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"unicode"
 
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
@@ -65,7 +64,7 @@ func Output(htmlStr string, w io.Writer) {
 loop:
 	for {
 		tt := z.Next()
-		indent := strings.Repeat(" ", depth*2)
+		indent := strings.Repeat(" ", depth*4)
 
 		// note: node.NextSibling will be always null
 		// since this is "one-pass" iteration and
@@ -81,73 +80,60 @@ loop:
 			}
 
 		case html.TextToken:
-			node := createNode(initToken(tt, token), html.TextNode, nil)
-			if !strings.ContainsFunc(node.Data, isNotSpace) {
-				// skip text nodes with whitespace only
-				continue
-			}
+			node := createNode(initToken(tt, token), html.TextNode, parent)
+			shouldDedent := false
 
-			if parent != nil {
-				parent.AppendChild(node)
-			}
-
-			if isInline(node.Parent) {
-				fmt.Fprintf(w, node.Data)
-			} else {
-				leftSpace := unicode.IsSpace(rune(node.Data[0]))
-
-				if leftSpace && isInline(node.PrevSibling) {
-					fmt.Fprint(w, " ")
+			if node.Parent != nil {
+				switch node.Parent.Data {
+				case "pre", "script", "style", "code":
+					shouldDedent = true
 				}
+			}
 
-				for line := range getLines(strings.TrimSpace(node.Data)) {
-					if !isInline(node.PrevSibling) || !isInline(node) {
-						fmt.Fprint(w, indent)
+			if shouldDedent {
+				node.Data = collapseWhitespace("\n" + dedent(node.Data) + "\n")
+				for line := range getLines(node.Data) {
+					fmt.Fprintf(w, "%s%s", indent, line)
+				}
+			} else {
+				node.Data = collapseWhitespace(node.Data)
+				lineno := 0
+				for line := range getLines(node.Data) {
+					if len(line) == 0 {
+						continue
 					}
-					if len(line) > 0 {
-						newline := line[len(line)-1] == '\n'
+					if lineno > 0 {
+						fmt.Fprintf(w, "%s", indent)
+						fmt.Fprintf(w, "%s", strings.TrimLeft(line, "\t "))
+					} else {
+						fmt.Fprintf(w, "%s", line)
+					}
 
-						s := strings.TrimSpace(line)
-						fmt.Fprint(w, s)
-						if newline {
-							fmt.Fprint(w, "\n")
-						}
-					}
+					lineno++
 				}
 			}
 
 		case html.SelfClosingTagToken, html.StartTagToken:
 			node := createNode(initToken(tt, token), html.ElementNode, parent)
 
-			if tt == html.StartTagToken {
+			if tt != html.SelfClosingTagToken && !isVoid(node) {
 				parent = node
 				depth++
 			}
 
-			if isInline(node) && node.PrevSibling != nil {
-				p := node.PrevSibling
-				rightSpace := unicode.IsSpace(rune(p.Data[len(p.Data)-1]))
-				if rightSpace {
-					fmt.Fprint(w, " ")
-				}
+			if endsWithNewLine(node.PrevSibling) || endsWithNewLine(node.Parent) {
+				fmt.Fprintf(w, "%s", indent)
 			}
-			if isInline(node.PrevSibling) && !isInline(node) {
-				fmt.Fprint(w, "\n")
-			}
-			if !isInline(node.PrevSibling) || !isInline(node) {
-				fmt.Fprint(w, indent)
-			}
-
 			fmt.Fprintf(w, "<%s", node.Data)
 
 			for _, attr := range node.Attr {
-				fmt.Fprintf(w, ` %s="%s"`, attr.Key, attr.Val)
+				if attr.Val == "" {
+					fmt.Fprintf(w, ` %s`, attr.Key)
+				} else {
+					fmt.Fprintf(w, ` %s=%q`, attr.Key, attr.Val)
+				}
 			}
-
 			fmt.Fprint(w, ">")
-			if !isInline(node) {
-				fmt.Fprint(w, "\n")
-			}
 
 		case html.EndTagToken:
 			node := parent
@@ -155,16 +141,18 @@ loop:
 			if depth > 0 {
 				depth--
 			}
-			indent := strings.Repeat(" ", depth*2)
+			indent := strings.Repeat(" ", depth*4)
 
 			if !isVoid(node) {
-				if isInline(node) {
+				if false && isInline(node) {
 					fmt.Fprintf(w, "</%s>", node.Data)
 				} else {
-					if isInline(node.LastChild) {
-						fmt.Fprint(w, "\n")
+					if endsWithNewLine(node.LastChild) {
+						fmt.Fprintf(w, "%s", indent)
+					} else if startsWithNewLine(node.FirstChild) {
+						fmt.Fprintf(w, "\n%s", indent)
 					}
-					fmt.Fprintf(w, "%s</%s>\n", indent, strings.TrimSpace(node.Data))
+					fmt.Fprintf(w, "</%s>", node.Data)
 				}
 			}
 			for c := node.FirstChild; c != nil; c = c.NextSibling {
@@ -172,8 +160,37 @@ loop:
 				pool.free(c)
 			}
 
-		case html.CommentToken, html.DoctypeToken:
-			fmt.Fprintf(w, "%s%s%s", indent, string(z.Raw()), "\n")
+		case html.DoctypeToken:
+			fmt.Fprintf(w, "%s", string(z.Raw()))
+
+		case html.CommentToken:
+			node := createNode(initToken(tt, token), html.TextNode, parent)
+			node.Data = collapseWhitespace(dedent(node.Data))
+
+			if parent != nil {
+				lastChild := parent.LastChild
+				if (lastChild != nil && endsWithNewLine(lastChild.PrevSibling)) || endsWithNewLine(parent) {
+					fmt.Fprintf(w, "%s", indent)
+				}
+			}
+			fmt.Fprint(w, "<!--")
+
+			lineNum := 0
+			for line := range getLines(node.Data) {
+				if lineNum > 1 {
+					fmt.Fprintf(w, "%s", indent)
+				} else if strings.HasPrefix(node.Data, "\n") {
+					fmt.Fprintf(w, "%s", indent)
+				}
+
+				fmt.Fprintf(w, "%s", line)
+				lineNum++
+			}
+
+			if strings.HasSuffix(node.Data, "\n") {
+				fmt.Fprintf(w, "%s", indent)
+			}
+			fmt.Fprint(w, "-->")
 		}
 	}
 }
