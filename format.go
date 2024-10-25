@@ -121,6 +121,16 @@ loop:
 				depth++
 			}
 
+			if node.Parent != nil && !endsWithNewLine(node.PrevSibling) {
+				if node.Parent.FirstChild == node || !isInline(node) || (isInline(node) && !isInline(node.PrevSibling)) {
+					ws := pool.get()
+					ws.Type = html.TextNode
+					ws.Data = "\n"
+					node.Parent.InsertBefore(ws, node)
+					fmt.Fprintf(w, "\n")
+				}
+			}
+
 			if endsWithNewLine(node.PrevSibling) || endsWithNewLine(node.Parent) {
 				fmt.Fprintf(w, "%s", indent)
 			}
@@ -144,17 +154,14 @@ loop:
 			indent := strings.Repeat(" ", depth*4)
 
 			if !isVoid(node) {
-				if false && isInline(node) {
-					fmt.Fprintf(w, "</%s>", node.Data)
-				} else {
-					if endsWithNewLine(node.LastChild) {
-						fmt.Fprintf(w, "%s", indent)
-					} else if startsWithNewLine(node.FirstChild) {
-						fmt.Fprintf(w, "\n%s", indent)
-					}
-					fmt.Fprintf(w, "</%s>", node.Data)
+				if endsWithNewLine(node.LastChild) {
+					fmt.Fprintf(w, "%s", indent)
+				} else if startsWithNewLine(node.FirstChild) {
+					fmt.Fprintf(w, "\n%s", indent)
 				}
+				fmt.Fprintf(w, "</%s>", node.Data)
 			}
+
 			for c := node.FirstChild; c != nil; c = c.NextSibling {
 				node.RemoveChild(c)
 				pool.free(c)

@@ -18,7 +18,7 @@ func test(t *testing.T, data Data) {
 
 	if expected != output {
 		printComparison(expected, output)
-		t.Errorf("unexpected output")
+		t.Fatalf("unexpected output")
 	}
 }
 
@@ -79,6 +79,9 @@ func TestFormat(t *testing.T) {
     `,
 	})
 
+	/*
+	 */
+
 	test(t, Data{
 		input: `
     <!--a-->
@@ -103,25 +106,64 @@ cccc
 
 	test(t, Data{
 		input: `
-	   	<p>
+						<body>
+						<div id="site-menu-container"><ul id="site-menu"><li><a class="selected"href="/">/top/</a></li><li><a class=""href="/?feed=new">/new/</a></li><li><a class=""href="/?feed=best">/best/</a></li><li><a class=""href="/?feed=ask">/ask/</a></li><li><a class=""href="/?feed=show">/show/</a></li><li><a class=""href="/?feed=job">/job/</a></li></ul></div><div id="site-nav"><div id="site-logo"><a href="/">^</a></div><a id="site-name"href="/">sitename</a><div id="site-nav-spacing"></div></div><div id="wrapper"></div></body>
+    `,
+		expectedOutput: `
+<body>
+    <div id="site-menu-container">
+        <ul id="site-menu">
+            <li>
+                <a class="selected" href="/">/top/</a>
+            </li>
+            <li>
+                <a class href="/?feed=new">/new/</a>
+            </li>
+            <li>
+                <a class href="/?feed=best">/best/</a>
+            </li>
+            <li>
+                <a class href="/?feed=ask">/ask/</a>
+            </li>
+            <li>
+                <a class href="/?feed=show">/show/</a>
+            </li>
+            <li>
+                <a class href="/?feed=job">/job/</a>
+            </li>
+        </ul>
+    </div>
+    <div id="site-nav">
+        <div id="site-logo">
+            <a href="/">^</a>
+        </div>
+        <a id="site-name" href="/">sitename</a>
+        <div id="site-nav-spacing"></div>
+    </div>
+    <div id="wrapper"></div>
+</body>
+    `,
+	})
 
-  Whitespaces around, between, in, after texts/nodes
-  should be <i>maintained</i>. The period from
-  the last sentence should not be separated with
-  a space, but this one <b>is</b>   .
+	test(t, Data{
+		input: `
+			   	<p>
+		  Whitespaces around, between, in, after texts/nodes
+		  should be <i>maintained</i>. The period from
+		  the last sentence should not be separated with
+		  a space, but this one <b>is</b>   .
 
-	   	  <em>    This has a leading space</em>
+			   	  <em>    This has a leading space</em>
 
-	   	      <em>This has a trailing space   </em>
+			   	      <em>This has a trailing space   </em>
 
-	   	  Here's a [<a>link</a>] inside a pair of brackets without spaces.
+			   	  Here's a [<a>link</a>] inside a pair of brackets without spaces.
 
-	   	  Here's one [    <a>  link </a>   ] have erratic spaces.
+			   	  Here's one [    <a>  link </a>   ] have erratic spaces.
 
-  <a>
-      This sentence is a whole link.
-  </a></p>
-
+		  <a>
+		      This sentence is a whole link.
+		  </a></p>
     `,
 		expectedOutput: `
 <p>
@@ -132,7 +174,7 @@ cccc
     <em> This has a leading space</em>
     <em>This has a trailing space </em>
     Here's a [<a>link</a>] inside a pair of brackets without spaces.
-    
+
     Here's one [ <a> link </a> ] have erratic spaces.
     <a>
         This sentence is a whole link.
@@ -142,32 +184,12 @@ cccc
 	})
 
 	/*
-		  TODO: handle this case
-		  solution 1:
-		    If a block node has more than three child, surround block with newlines.
-		    This requires reading ahead the whole subtree, so this will be less efficient.
-		  solution 2:
-		    Just always surround the blocks with newlines.
-		    The downside is that it may break whitespace expectations.
-
-			test(t, Data{
-				input: `
-		<body>
-		<div id="site-menu-container"><ul id="site-menu"><li><a class="selected"href="/">/top/</a></li><li><a class=""href="/?feed=new">/new/</a></li><li><a class=""href="/?feed=best">/best/</a></li><li><a class=""href="/?feed=ask">/ask/</a></li><li><a class=""href="/?feed=show">/show/</a></li><li><a class=""href="/?feed=job">/job/</a></li></ul></div><div id="site-nav"><div id="site-logo"><a href="/">^</a></div><a id="site-name"href="/">slacker news</a><div id="site-nav-spacing"></div><div><div id="account-info"><li><a href="#/login">login</a></li><li><a href="/about">about</a></li></div></div></div><div id="wrapper"><div>
-						<script>
-		        function foo() {
-		        	return 1+1;
-		        }</script>
-		    `, expectedOutput: `
-		  TODO:
-		    `,
-			})
-
-			test(t, Data{
-				input: `
-		    `, expectedOutput: `
-		    `,
-			})
-
+		    template:
+					test(t, Data{
+						input: `
+				    `,
+						expectedOutput: `
+				    `,
+					})
 	*/
 }
