@@ -1,6 +1,8 @@
 # htmlformat
 
-A (WIP) go library for formatting HTML.
+A go library for formatting HTML.
+
+[![Go Reference](https://pkg.go.dev/badge/github.com/nvlled/htmlformat.svg)](https://pkg.go.dev/github.com/nvlled/htmlformat)
 
 ## Behaviour and restrictions
 - whitespaces around and inside inline nodes are conserved
@@ -83,5 +85,3 @@ Whereas, this library will output:
 
 ## TODO
 - create a site that compares output of different libraries
-- upload at pkg.go.dev
-- create an executable program
