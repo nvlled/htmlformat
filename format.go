@@ -103,7 +103,9 @@ loop:
 						continue
 					}
 					if lineno > 0 {
-						fmt.Fprintf(w, "%s", indent)
+						if strings.ContainsFunc(line, isNotSpace) {
+							fmt.Fprintf(w, "%s", indent)
+						}
 						fmt.Fprintf(w, "%s", strings.TrimLeft(line, "\t "))
 					} else {
 						fmt.Fprintf(w, "%s", line)
@@ -121,7 +123,7 @@ loop:
 				depth++
 			}
 
-			if node.Parent != nil && !endsWithNewLine(node.PrevSibling) {
+			if node.Parent != nil && !endsWithNewLine(node.PrevSibling) && !isInline(node.Parent) {
 				if node.Parent.FirstChild == node || !isInline(node) || (isInline(node) && !isInline(node.PrevSibling)) {
 					ws := pool.get()
 					ws.Type = html.TextNode

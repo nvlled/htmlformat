@@ -18,11 +18,15 @@ func test(t *testing.T, data Data) {
 
 	if expected != output {
 		printComparison(expected, output)
-		t.Fatalf("unexpected output")
+		t.Error("unexpected output")
 	}
 }
 
 func printComparison(expected, actual string) {
+	expected = strings.ReplaceAll(expected, " ", "␣")
+	expected = strings.ReplaceAll(expected, "\t", "↦   ")
+	actual = strings.ReplaceAll(actual, "\t", "↦   ")
+	actual = strings.ReplaceAll(actual, " ", "␣")
 	s := fmt.Sprintf("\n------[expected]------ \n%s\n------[ actual ]------\n%s\n----------------------\n", expected, actual)
 	println(s)
 }
@@ -183,13 +187,38 @@ cccc
     `,
 	})
 
-	/*
-		    template:
-					test(t, Data{
-						input: `
-				    `,
-						expectedOutput: `
-				    `,
-					})
+	test(t, Data{
+		input: `
+<p>
+	<em><a>blah</a></em>foo
+	bar <em>baz</em>
+	<a><b><i>x</i><</b></a>
+</p>
+	`,
+		expectedOutput: `
+<p>
+    <em><a>blah</a></em>foo
+    bar <em>baz</em>
+    <a><b><i>x</i><</b></a>
+</p>
+	`,
+	})
+
+	test(t, Data{
+		input: `
+<a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a>
+	`,
+		expectedOutput: `
+<a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a>
+	`,
+	})
+
+	/* template
+	test(t, Data{
+		input: `
+	`,
+		expectedOutput: `
+	`,
+		})
 	*/
 }
