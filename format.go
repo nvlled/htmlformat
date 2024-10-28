@@ -10,13 +10,15 @@ import (
 	"golang.org/x/net/html/atom"
 )
 
-func String(htmlStr string) string {
+// Format returns a cleanly formatted html string.
+func Format(htmlStr string) string {
 	buf := bytes.NewBufferString("")
-	Output(htmlStr, buf)
+	Write(htmlStr, buf)
 	return buf.String()
 }
 
-func Output(htmlStr string, w io.Writer) {
+// Format writes the cleanly formatted html string into w.
+func Write(htmlStr string, w io.Writer) {
 	z := html.NewTokenizer(strings.NewReader(htmlStr))
 	depth := 0
 	pool := &nodePool{}

@@ -2,33 +2,42 @@ package htmlformat
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 )
 
-type Data struct {
-	input          string
-	expectedOutput string
+func ExampleFormat() {
+	html := `<p   id = "x">hello</p > `
+	fmt.Println(Format(html))
+	// Output:
+	// <p id="x">hello</p>
 }
 
-func test(t *testing.T, data Data) {
-	output := String(data.input)
-	output = strings.TrimSpace(output)
-	expected := strings.TrimSpace(data.expectedOutput)
+func ExampleWrite() {
+	// Write output directly to stdout
+	html := `<p   id = "x">hello to stdout</p > `
+	Write(html, os.Stdout)
+	// Output:
+	// <p id="x">hello to stdout</p>
+}
 
-	if expected != output {
-		printComparison(expected, output)
-		t.Error("unexpected output")
+func ExampleWrite_second() {
+	// Write output directly to a file
+	file, err := os.CreateTemp("", "")
+	if err != nil {
+		panic(err)
 	}
-}
+	defer os.Remove(file.Name())
+	html := `<p   id = "x">hello to file</p > `
+	Write(html, file)
+	file.Sync()
+	file.Close()
 
-func printComparison(expected, actual string) {
-	expected = strings.ReplaceAll(expected, " ", "␣")
-	expected = strings.ReplaceAll(expected, "\t", "↦   ")
-	actual = strings.ReplaceAll(actual, "\t", "↦   ")
-	actual = strings.ReplaceAll(actual, " ", "␣")
-	s := fmt.Sprintf("\n------[expected]------ \n%s\n------[ actual ]------\n%s\n----------------------\n", expected, actual)
-	println(s)
+	bytes, err := os.ReadFile(file.Name())
+	fmt.Println(string(bytes))
+	// Output:
+	// <p id="x">hello to file</p>
 }
 
 func TestFormat(t *testing.T) {
@@ -221,4 +230,29 @@ cccc
 	`,
 		})
 	*/
+}
+
+type Data struct {
+	input          string
+	expectedOutput string
+}
+
+func test(t *testing.T, data Data) {
+	output := Format(data.input)
+	output = strings.TrimSpace(output)
+	expected := strings.TrimSpace(data.expectedOutput)
+
+	if expected != output {
+		printComparison(expected, output)
+		t.Error("unexpected output")
+	}
+}
+
+func printComparison(expected, actual string) {
+	expected = strings.ReplaceAll(expected, " ", "␣")
+	expected = strings.ReplaceAll(expected, "\t", "↦   ")
+	actual = strings.ReplaceAll(actual, "\t", "↦   ")
+	actual = strings.ReplaceAll(actual, " ", "␣")
+	s := fmt.Sprintf("\n------[expected]------ \n%s\n------[ actual ]------\n%s\n----------------------\n", expected, actual)
+	println(s)
 }

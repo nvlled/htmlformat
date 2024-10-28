@@ -3,7 +3,8 @@
 A (WIP) go library for formatting HTML.
 
 ## Behaviour and restrictions
-- long lines are never wrapped, and left as it is
+- whitespaces around and inside inline nodes are conserved
+- long lines are never wrapped, and left unchanged
 - attributes too are always on a single line after the tag name
 - *script*, *style*, *code*, *pre* contents are treated as text,
   the indentation is only modified to align with the parent node 
@@ -11,11 +12,11 @@ A (WIP) go library for formatting HTML.
 ## Why
 
 There are already plenty of existing HTML formatters.
-I wrote this one because there is recurring quirk
-that I see with HTML formatters, not just in go packages.
-Even in JSX formatters too.
+I wrote this one because there is a recurring quirk
+that I see with HTML formatters, not just in go packages,
+even in JSX formatters too.
 The recurring quirk is that the whitespaces 
-are not correctly inserted or preserved.
+are not correctly inserted or conserved.
 
 For instance:
 ```
