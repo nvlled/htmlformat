@@ -186,9 +186,9 @@ cccc
     a space, but this one <b>is</b> .
     <em> This has a leading space</em>
     <em>This has a trailing space </em>
-    Here's a [<a>link</a>] inside a pair of brackets without spaces.
+    Here&#39;s a [<a>link</a>] inside a pair of brackets without spaces.
 
-    Here's one [ <a> link </a> ] have erratic spaces.
+    Here&#39;s one [ <a> link </a> ] have erratic spaces.
     <a>
         This sentence is a whole link.
     </a>
@@ -201,24 +201,37 @@ cccc
 <p>
 	<em><a>blah</a></em>foo
 	bar <em>baz</em>
-	<a><b><i>x</i><</b></a>
+	<a><b><i>x</i></b></a>
 </p>
 	`,
 		expectedOutput: `
 <p>
     <em><a>blah</a></em>foo
     bar <em>baz</em>
-    <a><b><i>x</i><</b></a>
+    <a><b><i>x</i></b></a>
 </p>
 	`,
 	})
 
 	test(t, Data{
 		input: `
-<a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a>
+<a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a>
 	`,
 		expectedOutput: `
-<a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a><a><b><i>x</i><</b></a>
+<a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a>
+	`,
+	})
+
+	test(t, Data{
+		input: `
+<p>
+	&lt;script&gt;alert("hey")&lt;/script&gt;
+</p>
+	`,
+		expectedOutput: `
+<p>
+    &lt;script&gt;alert(&#34;hey&#34;)&lt;/script&gt;
+</p>
 	`,
 	})
 

@@ -30,8 +30,11 @@ func Write(htmlStr string, w io.Writer) {
 		node := pool.get()
 		node.Type = ntype
 		node.DataAtom = token.DataAtom
-		node.Data = token.Data
 		node.Attr = token.Attr
+		node.Data = token.Data
+		if ntype == html.TextNode {
+			node.Data = html.EscapeString(token.Data)
+		}
 		if parent != nil {
 			parent.AppendChild(node)
 		}
