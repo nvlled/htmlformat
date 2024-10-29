@@ -32,9 +32,6 @@ func Write(htmlStr string, w io.Writer) {
 		node.DataAtom = token.DataAtom
 		node.Attr = token.Attr
 		node.Data = token.Data
-		if ntype == html.TextNode {
-			node.Data = html.EscapeString(token.Data)
-		}
 		if parent != nil {
 			parent.AppendChild(node)
 		}
@@ -45,8 +42,12 @@ func Write(htmlStr string, w io.Writer) {
 		t.Type = tt
 		t.Attr = t.Attr[:0]
 		switch tt {
-		case html.TextToken, html.CommentToken, html.DoctypeToken:
+		case html.CommentToken, html.DoctypeToken:
 			t.Data = string(z.Text())
+		case html.TextToken:
+			// Use Raw() here instead of Text(),
+			// otherwise escaped characters will be unescaped!!
+			t.Data = string(z.Raw())
 		case html.StartTagToken, html.SelfClosingTagToken, html.EndTagToken:
 			name, moreAttr := z.TagName()
 			for moreAttr {
@@ -98,7 +99,10 @@ loop:
 			if shouldDedent {
 				node.Data = collapseWhitespace("\n" + dedent(node.Data) + "\n")
 				for line := range getLines(node.Data) {
-					fmt.Fprintf(w, "%s%s", indent, line)
+					if strings.ContainsFunc(line, isNotSpace) {
+						fmt.Fprintf(w, "%s", indent)
+					}
+					fmt.Fprintf(w, "%s", line)
 				}
 			} else {
 				node.Data = collapseWhitespace(node.Data)

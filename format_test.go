@@ -1,6 +1,7 @@
 package htmlformat
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"strings"
@@ -186,9 +187,9 @@ cccc
     a space, but this one <b>is</b> .
     <em> This has a leading space</em>
     <em>This has a trailing space </em>
-    Here&#39;s a [<a>link</a>] inside a pair of brackets without spaces.
+    Here's a [<a>link</a>] inside a pair of brackets without spaces.
 
-    Here&#39;s one [ <a> link </a> ] have erratic spaces.
+    Here's one [ <a> link </a> ] have erratic spaces.
     <a>
         This sentence is a whole link.
     </a>
@@ -225,12 +226,18 @@ cccc
 	test(t, Data{
 		input: `
 <p>
-	&lt;script&gt;alert("hey")&lt;/script&gt;
+  >>>>
+		&lt;script&gt;alert(&#34;hey&#34;)&lt;/script&gt;
+	<script> console.log(1 > 2); </script>
 </p>
 	`,
 		expectedOutput: `
 <p>
+    >>>>
     &lt;script&gt;alert(&#34;hey&#34;)&lt;/script&gt;
+    <script>
+        console.log(1 > 2);
+    </script>
 </p>
 	`,
 	})
@@ -261,11 +268,44 @@ func test(t *testing.T, data Data) {
 	}
 }
 
+func showTrailingSpaces(s string) string {
+	var buf bytes.Buffer
+
+	runes := []rune(s)
+	var i int
+	for i = len(runes) - 1; i >= 0; i-- {
+		if isNotSpace(runes[i]) {
+			break
+		}
+	}
+
+	trailing := i
+	i = 0
+	for ; i < len(runes); i++ {
+		c := runes[i]
+		if c == ' ' && i >= trailing {
+			buf.WriteRune('␣')
+		} else if c == '\t' {
+			buf.WriteString("↦   ")
+		} else {
+			buf.WriteRune(c)
+		}
+	}
+
+	return buf.String()
+}
+func showTrailingSpacesByLine(s string) string {
+	var buf bytes.Buffer
+	for line := range getLines(s) {
+		buf.WriteString(showTrailingSpaces(line))
+	}
+
+	return buf.String()
+}
+
 func printComparison(expected, actual string) {
-	expected = strings.ReplaceAll(expected, " ", "␣")
-	expected = strings.ReplaceAll(expected, "\t", "↦   ")
-	actual = strings.ReplaceAll(actual, "\t", "↦   ")
-	actual = strings.ReplaceAll(actual, " ", "␣")
-	s := fmt.Sprintf("\n------[expected]------ \n%s\n------[ actual ]------\n%s\n----------------------\n", expected, actual)
-	println(s)
+	expected = showTrailingSpacesByLine(expected)
+	actual = showTrailingSpacesByLine(actual)
+	line := strings.Repeat("=~", 12)
+	fmt.Fprintf(os.Stderr, "\n%s[expected]%s\n%s\n%s[ actual ]%s\n%s\n%s%s%s\n", line, line, expected, line, line, actual, line, line, line)
 }
