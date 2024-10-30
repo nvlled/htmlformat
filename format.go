@@ -22,6 +22,7 @@ func Write(htmlStr string, w io.Writer) {
 	z := html.NewTokenizer(strings.NewReader(htmlStr))
 	depth := 0
 	pool := &nodePool{}
+	preDepth := 0
 
 	var parent *html.Node = new(html.Node)
 	var token *html.Token = new(html.Token)
@@ -91,12 +92,14 @@ loop:
 
 			if node.Parent != nil {
 				switch node.Parent.Data {
-				case "pre", "script", "style", "code":
+				case "script", "style":
 					shouldDedent = true
 				}
 			}
 
-			if shouldDedent {
+			if preDepth > 0 {
+				fmt.Fprintf(w, "%s", node.Data)
+			} else if shouldDedent {
 				node.Data = collapseWhitespace("\n" + dedent(node.Data) + "\n")
 				for line := range getLines(node.Data) {
 					if strings.ContainsFunc(line, isNotSpace) {
@@ -132,18 +135,24 @@ loop:
 				depth++
 			}
 
-			if node.Parent != nil && !endsWithNewLine(node.PrevSibling) && !isInline(node.Parent) {
-				if node.Parent.FirstChild == node || !isInline(node) || (isInline(node) && !isInline(node.PrevSibling)) {
-					ws := pool.get()
-					ws.Type = html.TextNode
-					ws.Data = "\n"
-					node.Parent.InsertBefore(ws, node)
-					fmt.Fprintf(w, "\n")
-				}
+			if node.DataAtom == atom.Pre {
+				preDepth++
 			}
 
-			if endsWithNewLine(node.PrevSibling) || endsWithNewLine(node.Parent) {
-				fmt.Fprintf(w, "%s", indent)
+			if preDepth <= 0 {
+				if node.Parent != nil && !endsWithNewLine(node.PrevSibling) && !isInline(node.Parent) {
+					if node.Parent.FirstChild == node || !isInline(node) || (isInline(node) && !isInline(node.PrevSibling)) {
+						ws := pool.get()
+						ws.Type = html.TextNode
+						ws.Data = "\n"
+						node.Parent.InsertBefore(ws, node)
+						fmt.Fprintf(w, "\n")
+					}
+				}
+
+				if endsWithNewLine(node.PrevSibling) || endsWithNewLine(node.Parent) {
+					fmt.Fprintf(w, "%s", indent)
+				}
 			}
 			fmt.Fprintf(w, "<%s", node.Data)
 
@@ -165,12 +174,18 @@ loop:
 			indent := strings.Repeat(" ", depth*4)
 
 			if !isVoid(node) {
-				if endsWithNewLine(node.LastChild) {
-					fmt.Fprintf(w, "%s", indent)
-				} else if startsWithNewLine(node.FirstChild) {
-					fmt.Fprintf(w, "\n%s", indent)
+				if preDepth <= 0 {
+					if endsWithNewLine(node.LastChild) {
+						fmt.Fprintf(w, "%s", indent)
+					} else if startsWithNewLine(node.FirstChild) {
+						fmt.Fprintf(w, "\n%s", indent)
+					}
 				}
 				fmt.Fprintf(w, "</%s>", node.Data)
+			}
+
+			if node.DataAtom == atom.Pre && preDepth > 0 {
+				preDepth--
 			}
 
 			for c := node.FirstChild; c != nil; c = c.NextSibling {

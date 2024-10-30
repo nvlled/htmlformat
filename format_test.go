@@ -242,6 +242,41 @@ cccc
 	`,
 	})
 
+	test(t, Data{
+		input: `
+<pre> aaa
+        bbb
+    ccc
+</pre>
+    <pre>
+        <code>
+        aaa
+            bbb
+                ccc
+        </code>
+    </pre>
+    <pre><code> one
+    two
+        three</code></pre>
+	`,
+		expectedOutput: `
+<pre> aaa
+        bbb
+    ccc
+</pre>
+<pre>
+        <code>
+        aaa
+            bbb
+                ccc
+        </code>
+    </pre>
+<pre><code> one
+    two
+        three</code></pre>
+	`,
+	})
+
 	/* template
 	test(t, Data{
 		input: `
