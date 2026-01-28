@@ -177,13 +177,14 @@ loop:
 
 			if !isVoid(node) {
 				if preDepth <= 0 {
-					if (startsWithNewLine(node.FirstChild) && !endsWithNewLine(node.LastChild)) ||
-						isBlock(node.LastChild) {
-						ws := pool.get()
-						ws.Type = html.TextNode
-						ws.Data = "\n"
-						node.AppendChild(ws)
-						fmt.Fprintf(w, "\n")
+					if !endsWithNewLine(node.LastChild) {
+						if startsWithNewLine(node.FirstChild) || isBlock(node.LastChild) {
+							ws := pool.get()
+							ws.Type = html.TextNode
+							ws.Data = "\n"
+							node.AppendChild(ws)
+							fmt.Fprintf(w, "\n")
+						}
 					}
 					if endsWithNewLine(node.LastChild) {
 						fmt.Fprintf(w, "%s", getIndent(depth))
@@ -209,10 +210,17 @@ loop:
 			node := createNode(initToken(tt, token), html.TextNode, parent)
 			node.Data = collapseWhitespace(dedent(node.Data))
 
-			if parent != nil {
-				lastChild := parent.LastChild
-				if (lastChild != nil && endsWithNewLine(lastChild.PrevSibling)) || endsWithNewLine(parent) {
-					fmt.Fprintf(w, "%s", getIndent(depth))
+			if preDepth <= 0 {
+				if !endsWithNewLine(node.PrevSibling) && isBlock(node.PrevSibling) {
+					ws := pool.get()
+					ws.Type = html.TextNode
+					ws.Data = "\n"
+					node.Parent.InsertBefore(ws, node)
+					fmt.Fprintf(w, "\n")
+				}
+
+				if endsWithNewLine(node.PrevSibling) {
+					fmt.Fprintf(w, "%s", indent)
 				}
 			}
 			fmt.Fprint(w, "<!--")

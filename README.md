@@ -12,13 +12,17 @@ A go library for formatting HTML.
   the indentation is only modified to align with the parent node 
 
 ## Formatting algorithm in a nutshell
-- Whitespaces are collapsed into a single space or newline
+- input whitespaces are collapsed into a single output space or newline
   e.g. collapse("   ") == " " and collapse("\n\n     ") == "\n"
-- Insert a newline before a start tag if
-  previous sibling doesn't end in a newline
-- Insert a newline before an end tag if
-  last child doesn't end in a newline
-- Skip formatting if there's an unclosed <pre> tag
+- before a start tag:
+  - if previous sibling element doesn't end with a whitespace,
+    and (current or previous sibling element is a block), add a newline
+  - if previous sibling has a newline, add an indent
+- before an end tag, same rules as with start tag,
+  but check the last child element instead of the previous sibling
+  - also instead of checking the current element,
+    check first child if it ends with a newline
+- skip formatting if there's an unclosed `<pre>` tag
 
 ## Importing as a library
 Add dependency
