@@ -57,6 +57,56 @@ func TestFormat(t *testing.T) {
     `,
 	})
 
+	// -------------------------------------------------------------------------------
+
+	test(t, Data{
+		input: `
+                     <tr><td><p><a id="Standard_Header_Files:Xlib.h"></a><span class="term"><code class="filename">&lt;X11/Xlib.h&gt;</code></span></p></td><td><a id="idm140495663908496" class="indexterm"></a><a id="idm140495663902640" class="indexterm"></a><a id="idm140495663901520" class="indexterm"></a><p>
+This is the main header file for Xlib.
+The majority of all Xlib symbols are declared by including this file.
+This file also contains the preprocessor symbol
+<span class="symbol">XlibSpecificationRelease</span>.
+<a id="idm140495663899504" class="indexterm"></a>
+This symbol is defined to have the 6 in this release of the standard.
+(Release 5 of Xlib was the first release to have this symbol.)
+      </p></td></tr>
+    `,
+		expectedOutput: `
+<tr>
+    <td>
+        <p><a id="Standard_Header_Files:Xlib.h"></a><span class="term"><code class="filename">&lt;X11/Xlib.h&gt;</code></span></p>
+    </td>
+    <td><a id="idm140495663908496" class="indexterm"></a><a id="idm140495663902640" class="indexterm"></a><a id="idm140495663901520" class="indexterm"></a>
+        <p>
+            This is the main header file for Xlib.
+            The majority of all Xlib symbols are declared by including this file.
+            This file also contains the preprocessor symbol
+            <span class="symbol">XlibSpecificationRelease</span>.
+            <a id="idm140495663899504" class="indexterm"></a>
+            This symbol is defined to have the 6 in this release of the standard.
+            (Release 5 of Xlib was the first release to have this symbol.)
+        </p>
+    </td>
+</tr>
+
+`,
+	})
+
+	// -------------------------------------------------------------------------------
+
+	test(t, Data{
+		input: `
+		<div><div>foo</div></div>
+    `,
+		expectedOutput: `
+<div>
+    <div>foo</div>
+</div>
+    `,
+	})
+
+	// -------------------------------------------------------------------------------
+
 	test(t, Data{
 		input: `
  <h1 >heading</h1 >
@@ -93,8 +143,7 @@ func TestFormat(t *testing.T) {
     `,
 	})
 
-	/*
-	 */
+	// -------------------------------------------------------------------------------
 
 	test(t, Data{
 		input: `
@@ -118,6 +167,8 @@ cccc
     `,
 	})
 
+	// -------------------------------------------------------------------------------
+
 	test(t, Data{
 		input: `
 						<body>
@@ -127,30 +178,16 @@ cccc
 <body>
     <div id="site-menu-container">
         <ul id="site-menu">
-            <li>
-                <a class="selected" href="/">/top/</a>
-            </li>
-            <li>
-                <a class href="/?feed=new">/new/</a>
-            </li>
-            <li>
-                <a class href="/?feed=best">/best/</a>
-            </li>
-            <li>
-                <a class href="/?feed=ask">/ask/</a>
-            </li>
-            <li>
-                <a class href="/?feed=show">/show/</a>
-            </li>
-            <li>
-                <a class href="/?feed=job">/job/</a>
-            </li>
+            <li><a class="selected" href="/">/top/</a></li>
+            <li><a class href="/?feed=new">/new/</a></li>
+            <li><a class href="/?feed=best">/best/</a></li>
+            <li><a class href="/?feed=ask">/ask/</a></li>
+            <li><a class href="/?feed=show">/show/</a></li>
+            <li><a class href="/?feed=job">/job/</a></li>
         </ul>
     </div>
     <div id="site-nav">
-        <div id="site-logo">
-            <a href="/">^</a>
-        </div>
+        <div id="site-logo"><a href="/">^</a></div>
         <a id="site-name" href="/">sitename</a>
         <div id="site-nav-spacing"></div>
     </div>
@@ -158,6 +195,8 @@ cccc
 </body>
     `,
 	})
+
+	// -------------------------------------------------------------------------------
 
 	test(t, Data{
 		input: `
@@ -197,6 +236,8 @@ cccc
     `,
 	})
 
+	// -------------------------------------------------------------------------------
+
 	test(t, Data{
 		input: `
 <p>
@@ -214,6 +255,8 @@ cccc
 	`,
 	})
 
+	// -------------------------------------------------------------------------------
+
 	test(t, Data{
 		input: `
 <a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a>
@@ -222,6 +265,8 @@ cccc
 <a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a><a><b><i>x</i></b></a>
 	`,
 	})
+
+	// -------------------------------------------------------------------------------
 
 	test(t, Data{
 		input: `
@@ -241,6 +286,8 @@ cccc
 </p>
 	`,
 	})
+
+	// -------------------------------------------------------------------------------
 
 	test(t, Data{
 		input: `
@@ -276,6 +323,8 @@ cccc
         three</code></pre>
 	`,
 	})
+
+	// -------------------------------------------------------------------------------
 
 	/* template
 	test(t, Data{

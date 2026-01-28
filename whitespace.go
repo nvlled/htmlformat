@@ -20,7 +20,9 @@ func getLines(s string) iter.Seq[string] {
 					break
 				}
 			}
-			yield(s[a:b])
+			if !yield(s[a:b]) {
+				break
+			}
 			a = b
 		}
 	}
@@ -141,29 +143,16 @@ func collapseWhitespace(s string) string {
 func isNotSpace(r rune) bool { return !unicode.IsSpace(r) }
 
 func startsWithNewLine(node *html.Node) bool {
-	if node == nil {
-		return false
-	}
-
-	if node.Type == html.TextNode {
+	if node != nil && node.Type == html.TextNode {
 		return strings.HasPrefix(node.Data, "\n")
 	}
-	if node.Type == html.ElementNode {
-		return startsWithNewLine(node.LastChild)
-	}
-	return true
+	return false
 }
 
 func endsWithNewLine(node *html.Node) bool {
-	if node == nil {
-		return false
-	}
-
-	if node.Type == html.TextNode {
+	if node != nil && node.Type == html.TextNode {
 		return strings.HasSuffix(node.Data, "\n")
 	}
-	if node.Type == html.ElementNode {
-		return endsWithNewLine(node.LastChild)
-	}
-	return true
+
+	return false
 }

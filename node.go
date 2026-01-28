@@ -73,6 +73,13 @@ func isInline(node *html.Node) bool {
 	return yes
 }
 
+func isBlock(node *html.Node) bool {
+	if node == nil {
+		return false
+	}
+	return !isInline(node)
+}
+
 func isVoid(node *html.Node) bool {
 	if node == nil {
 		return false

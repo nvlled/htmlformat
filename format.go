@@ -22,8 +22,8 @@ func Pipe(r io.Reader, w io.Writer) {
 	depth := 0
 	pool := &nodePool{}
 
-	// if this is greater than 1, then there's
-	// is at lease one currently an open <pre>
+	// if preDepth is greater than 1, then there's
+	// at least currently one opened <pre>
 	preDepth := 0
 
 	var parent *html.Node = new(html.Node)
@@ -142,8 +142,8 @@ loop:
 			}
 
 			if preDepth <= 0 {
-				if node.Parent != nil && !endsWithNewLine(node.PrevSibling) && !isInline(node.Parent) {
-					if node.Parent.FirstChild == node || !isInline(node) || (isInline(node) && !isInline(node.PrevSibling)) {
+				if !endsWithNewLine(node.PrevSibling) {
+					if isBlock(node) || isBlock(node.PrevSibling) {
 						ws := pool.get()
 						ws.Type = html.TextNode
 						ws.Data = "\n"
@@ -152,7 +152,7 @@ loop:
 					}
 				}
 
-				if endsWithNewLine(node.PrevSibling) || endsWithNewLine(node.Parent) {
+				if endsWithNewLine(node.PrevSibling) {
 					fmt.Fprintf(w, "%s", indent)
 				}
 			}
@@ -177,10 +177,16 @@ loop:
 
 			if !isVoid(node) {
 				if preDepth <= 0 {
+					if (startsWithNewLine(node.FirstChild) && !endsWithNewLine(node.LastChild)) ||
+						isBlock(node.LastChild) {
+						ws := pool.get()
+						ws.Type = html.TextNode
+						ws.Data = "\n"
+						node.AppendChild(ws)
+						fmt.Fprintf(w, "\n")
+					}
 					if endsWithNewLine(node.LastChild) {
 						fmt.Fprintf(w, "%s", indent)
-					} else if startsWithNewLine(node.FirstChild) {
-						fmt.Fprintf(w, "\n%s", indent)
 					}
 				}
 				fmt.Fprintf(w, "</%s>", node.Data)
