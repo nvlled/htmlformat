@@ -17,11 +17,13 @@ func Format(htmlStr string) string {
 	return buf.String()
 }
 
-// Format writes the cleanly formatted html string into w.
-func Write(htmlStr string, w io.Writer) {
-	z := html.NewTokenizer(strings.NewReader(htmlStr))
+func Pipe(r io.Reader, w io.Writer) {
+	z := html.NewTokenizer(r)
 	depth := 0
 	pool := &nodePool{}
+
+	// if this is greater than 1, then there's
+	// is at lease one currently an open <pre>
 	preDepth := 0
 
 	var parent *html.Node = new(html.Node)
@@ -226,4 +228,10 @@ loop:
 			fmt.Fprint(w, "-->")
 		}
 	}
+}
+
+// Format writes the cleanly formatted html string into w.
+func Write(htmlStr string, w io.Writer) {
+	r := strings.NewReader(htmlStr)
+	Pipe(r, w)
 }
