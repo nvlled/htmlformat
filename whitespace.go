@@ -156,3 +156,7 @@ func endsWithNewLine(node *html.Node) bool {
 
 	return false
 }
+
+func getIndent(depth int) string {
+	return strings.Repeat(" ", depth*4)
+}

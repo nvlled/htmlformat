@@ -23,7 +23,8 @@ func Pipe(r io.Reader, w io.Writer) {
 	pool := &nodePool{}
 
 	// if preDepth is greater than 1, then there's
-	// at least currently one opened <pre>
+	// at least currently one opened <pre>,
+	// in which  disable adding newlines or indents
 	preDepth := 0
 
 	var parent *html.Node = new(html.Node)
@@ -73,10 +74,9 @@ func Pipe(r io.Reader, w io.Writer) {
 loop:
 	for {
 		tt := z.Next()
-		indent := strings.Repeat(" ", depth*4)
 
 		// note: node.NextSibling will be always null
-		// since this is "one-pass" iteration and
+		// since this is a "one-pass" iteration and
 		// so the code won't know in advance what
 		// the following nodes are.
 
@@ -105,7 +105,7 @@ loop:
 				node.Data = collapseWhitespace("\n" + dedent(node.Data) + "\n")
 				for line := range getLines(node.Data) {
 					if strings.ContainsFunc(line, isNotSpace) {
-						fmt.Fprintf(w, "%s", indent)
+						fmt.Fprintf(w, "%s", getIndent(depth))
 					}
 					fmt.Fprintf(w, "%s", line)
 				}
@@ -118,7 +118,7 @@ loop:
 					}
 					if lineno > 0 {
 						if strings.ContainsFunc(line, isNotSpace) {
-							fmt.Fprintf(w, "%s", indent)
+							fmt.Fprintf(w, "%s", getIndent(depth))
 						}
 						fmt.Fprintf(w, "%s", strings.TrimLeft(line, "\t "))
 					} else {
@@ -130,6 +130,7 @@ loop:
 			}
 
 		case html.SelfClosingTagToken, html.StartTagToken:
+			indent := getIndent(depth)
 			node := createNode(initToken(tt, token), html.ElementNode, parent)
 
 			if tt != html.SelfClosingTagToken && !isVoid(node) {
@@ -173,7 +174,6 @@ loop:
 			if depth > 0 {
 				depth--
 			}
-			indent := strings.Repeat(" ", depth*4)
 
 			if !isVoid(node) {
 				if preDepth <= 0 {
@@ -186,7 +186,7 @@ loop:
 						fmt.Fprintf(w, "\n")
 					}
 					if endsWithNewLine(node.LastChild) {
-						fmt.Fprintf(w, "%s", indent)
+						fmt.Fprintf(w, "%s", getIndent(depth))
 					}
 				}
 				fmt.Fprintf(w, "</%s>", node.Data)
@@ -205,13 +205,14 @@ loop:
 			fmt.Fprintf(w, "%s", string(z.Raw()))
 
 		case html.CommentToken:
+			indent := getIndent(depth)
 			node := createNode(initToken(tt, token), html.TextNode, parent)
 			node.Data = collapseWhitespace(dedent(node.Data))
 
 			if parent != nil {
 				lastChild := parent.LastChild
 				if (lastChild != nil && endsWithNewLine(lastChild.PrevSibling)) || endsWithNewLine(parent) {
-					fmt.Fprintf(w, "%s", indent)
+					fmt.Fprintf(w, "%s", getIndent(depth))
 				}
 			}
 			fmt.Fprint(w, "<!--")
