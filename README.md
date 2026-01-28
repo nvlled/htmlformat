@@ -11,6 +11,15 @@ A go library for formatting HTML.
 - *script*, *style*, *code*, *pre* contents are treated as text,
   the indentation is only modified to align with the parent node 
 
+## Formatting algorithm in a nutshell
+- Whitespaces are collapsed into a single space or newline
+  e.g. collapse("   ") == " " and collapse("\n\n     ") == "\n"
+- Insert a newline before a start tag if
+  previous sibling doesn't end in a newline
+- Insert a newline before an end tag if
+  last child doesn't end in a newline
+- Skip formatting if there's an unclosed <pre> tag
+
 ## Why
 
 There are already plenty of existing HTML formatters.
@@ -83,5 +92,5 @@ Whereas, this library will output:
 </p>
 ```
 
-## TODO
-- create a site that compares output of different libraries
+
+See [format_test.go](./format_test.go) for example outputs.
