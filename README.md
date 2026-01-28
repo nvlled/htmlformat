@@ -20,6 +20,30 @@ A go library for formatting HTML.
   last child doesn't end in a newline
 - Skip formatting if there's an unclosed <pre> tag
 
+## Importing as a library
+Add dependency
+```
+$ go get github.com/nvlled/htmlformat
+```
+Then import
+```
+import "github.com/nvlled/htmlformat"
+
+...
+
+htmlformat.Pipe(reader, writer)
+htmlformat.Write(str, writer)
+output := htmlformat.Format(str)
+
+```
+
+## Building and using the CLI
+```
+$ make
+$ ./htmlformat --help
+```
+
+
 ## Why
 
 There are already plenty of existing HTML formatters.
